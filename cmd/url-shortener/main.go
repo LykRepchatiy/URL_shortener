@@ -4,8 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
-	"flag"
+	"errors"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -38,7 +39,7 @@ func shortURL(input string) string {
 
 func writeToDatabase(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, "postgres://postgres:perlovka14@localhost:5432/patchesj")
+	conn, err := pgx.Connect(ctx, "postgres://postgres:postgres@localhost:5433/postgres")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -62,9 +63,29 @@ func writeToDatabase(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	_, err = conn.Exec(ctx, sql_insert, shortURL(request.URL), request.URL)
+	short_url := shortURL(request.URL)
+	_, err = conn.Exec(ctx, sql_insert, short_url, request.URL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sql_select_short := "SELECT short_url from url_data WHERE short_url = '($1)'"
+		row, err := conn.Query(ctx, sql_select_short, short_url)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		log.Println(row)
+		defer row.Close()
+		var sql_short_url string
+		for row.Next() {
+			err := row.Scan(&sql_short_url)
+			if err != nil {
+				log.Println("4")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		exist_error := "Data already exist " + sql_short_url
+		log.Println(sql_short_url)
+		http.Error(w, errors.New(exist_error).Error(), http.StatusInternalServerError)
 		return
 	}
 }
