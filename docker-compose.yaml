@@ -1,0 +1,13 @@
+servises:
+
+  postgres:
+    build: .
+    container_name: url-container
+    ports:
+      - "5432:5432"
+    env_file:
+      - postgres.env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app_network
