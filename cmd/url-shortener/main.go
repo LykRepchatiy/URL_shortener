@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
+	"flag"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -12,6 +15,25 @@ import (
 
 type Request struct {
 	URL string `json:"url"`
+}
+
+//TO DO: flag
+
+// func init() {
+// 	flag.BoolVar(p, "")
+// }
+
+const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+
+func shortURL(input string) string {
+	hash := sha256.Sum256([]byte(input))
+	var builder strings.Builder
+	builder.Grow(10)
+	for i := 0; i < 10; i++ {
+		index := int(hash[i]) % len(alphabet)
+		builder.WriteByte(alphabet[index])
+	}
+	return builder.String()
 }
 
 func writeToDatabase(w http.ResponseWriter, r *http.Request) {
@@ -22,8 +44,8 @@ func writeToDatabase(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close(ctx)
-	sql_create_tabe := `CREATE TABLE IF NOT EXISTS url_data ( id SERIAL PRIMARY KEY, url TEXT NOT NULL);`
-	sql_insert := "INSERT INTO url_data (url) VALUES ($1)"
+	sql_create_tabe := `CREATE TABLE IF NOT EXISTS url_data (id SERIAL PRIMARY KEY, short_url TEXT NOT NULL UNIQUE, url TEXT NOT NULL);`
+	sql_insert := "INSERT INTO url_data (short_url, url) VALUES ($1, $2)"
 	_, err = conn.Exec(ctx, sql_create_tabe)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -37,14 +59,14 @@ func writeToDatabase(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	err = json.Unmarshal(body, &request)
 	if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-	_, err = conn.Exec(ctx, sql_insert, request.URL)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	_, err = conn.Exec(ctx, sql_insert, shortURL(request.URL), request.URL)
 	if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func main() {

@@ -1,4 +1,4 @@
-servises:
+services:
 
   postgres:
     build: .
@@ -11,3 +11,21 @@ servises:
       - pg_data:/var/lib/postgresql/data
     networks:
       - app_network
+
+  url-shortener:
+    build: cmd/url-shortener
+    container_name: url-shortener
+    ports:
+      - "8080:8080"
+    env_file:
+      - cmd/url-shortener/url-shortener.env
+    depends_on:
+      - postgres
+    networks:
+      - app_network
+
+networks:
+  app_network:
+
+volumes:
+  pg_data:
