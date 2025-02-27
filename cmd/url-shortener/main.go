@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"url_shortener/internal/handlers"
 	"url_shortener/internal/middleware/logger"
@@ -24,8 +26,9 @@ func init() {
 		postgre = true
 	}
 	if cache && postgre {
-		// TO DO check for "Fatal" in SLOG
-		log.Fatal("Both postgre and cache flags are set. Please choose only one.")
+		logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+		logger.Error("Both postgre and cache flags are set. Please choose only one.")
+		os.Exit(1)
 	}
 }
 
