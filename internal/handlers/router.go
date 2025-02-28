@@ -21,16 +21,16 @@ func NewRouter() *Router {
 	}
 }
 
-func (r *Router) Start(DBConn *pgx.Conn) error {
+func (r *Router) StartDB(DBConn *pgx.Conn) error {
 	r.PG = DBConn
 	r.Router.Use(logger.MiddlewareLogger)
-	r.Router.With(validate.MiddlewareValidatePost).Post("/post", r.Post)
-	r.Router.With(validate.MiddlewareValidateGet).Get("/get", r.Get)
+	r.Router.With(validate.MiddlewareValidatePost).Post("/post", r.PostDB)
+	r.Router.With(validate.MiddlewareValidateGet).Get("/get", r.GetDB)
 	return http.ListenAndServe(":8080", &r.Router)
 }
 
 func (r *Router) StartCache() error {
-	// r.Router.Use(logger.MiddlewareLogger)
+	r.Router.Use(logger.MiddlewareLogger)
 	// r.Router.With(validate.MiddlewareValidatePost).Post("/post" /*Post*/)
 	// r.Router.With(validate.MiddlewareValidateGet).Get("/get" /*Get*/)
 	// return http.ListenAndServe(":8080", &r.Router)

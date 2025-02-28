@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"url_shortener/internal/database"
 	"url_shortener/internal/handlers"
-	"url_shortener/internal/service"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -46,13 +46,13 @@ func main() {
 			logger.Error(err.Error())
 			os.Exit(1)
 		}
-		_, err = DBConn.Exec(ctx, service.Sql_create_table)
+		_, err = DBConn.Exec(ctx, database.Sql_create_table)
 		if err != nil {
 			logger.Error(err.Error())
 			os.Exit(1)
 		}
 		go func() {
-			errChan <- r.Start(DBConn)
+			errChan <- r.StartDB(DBConn)
 		}()
 	} else if cache {
 

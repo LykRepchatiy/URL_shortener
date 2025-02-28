@@ -1,8 +1,9 @@
-package service
+package database
 
 import (
 	"context"
 	"errors"
+	"url_shortener/internal/service"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -14,7 +15,7 @@ const (
 	sql_select_short  = "SELECT short_url from url_data WHERE short_url=$1"
 )
 
-func DBPush(DBConn *pgx.Conn, short_url string, request HTPPModel) error {
+func DBPush(DBConn *pgx.Conn, short_url string, request service.HTPPModel) error {
 	ctx := context.Background()
 	_, err := DBConn.Exec(ctx, sql_insert, short_url, request.URL)
 	if err != nil {
