@@ -1,4 +1,4 @@
-package handler_utils
+package service
 
 import (
 	"crypto/sha256"

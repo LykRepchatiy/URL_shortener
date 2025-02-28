@@ -1,17 +1,17 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"log"
 	"log/slog"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"url_shortener/internal/handlers"
-	"url_shortener/internal/middleware/logger"
-	"url_shortener/internal/middleware/validate"
+	"url_shortener/internal/service"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 var (
@@ -33,13 +33,40 @@ func init() {
 }
 
 func main() {
-	r := chi.NewRouter()
-	r.Use(logger.MiddlewareLogger)
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	signalChan := make(chan os.Signal, 1)
+	errChan := make(chan error, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	r := handlers.NewRouter()
 	if postgre {
-		r.With(validate.MiddlewareValidatePost).Post("/post", handlers.Post)
-		r.With(validate.MiddlewareValidateGet).Get("/get", handlers.Get)
+		ctx := context.Background()
+		DBConn, err := pgx.Connect(ctx, "postgres://postgres:perlovka14@localhost:5432/patchesj")
+		if err != nil {
+			logger.Error(err.Error())
+			os.Exit(1)
+		}
+		_, err = DBConn.Exec(ctx, service.Sql_create_table)
+		if err != nil {
+			logger.Error(err.Error())
+			os.Exit(1)
+		}
+		go func() {
+			errChan <- r.Start(DBConn)
+		}()
 	} else if cache {
-		log.Println("Not implemented yet")
+
+		go func() {
+			errChan <- r.StartCache()
+		}()
 	}
-	http.ListenAndServe(":8080", r)
+
+	select {
+	case <-signalChan:
+		r.Finish()
+	case <-errChan:
+		r.Finish()
+	}
+	close(signalChan)
+	close(errChan)
 }
