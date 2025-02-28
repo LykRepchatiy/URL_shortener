@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"url_shortener/internal/cache"
 	"url_shortener/internal/database"
 	"url_shortener/internal/handlers"
 
@@ -15,22 +16,18 @@ import (
 )
 
 var (
-	postgre, cache bool
+	postgre bool
 )
 
 func init() {
 	flag.BoolVar(&postgre, "postgre", false, "use postgre for store URLs")
-	flag.BoolVar(&cache, "cache", false, "use cache for store URLs")
 	flag.Parse()
-	if !postgre && !cache {
-		postgre = true
-	}
-	if cache && postgre {
-		logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
-		logger.Error("Both postgre and cache flags are set. Please choose only one.")
-		os.Exit(1)
-	}
 }
+
+/*
+	TO DO graceful shutdown!!!
+	TO DO postgres connection URL to config!!!
+*/
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
@@ -41,7 +38,7 @@ func main() {
 	r := handlers.NewRouter()
 	if postgre {
 		ctx := context.Background()
-		DBConn, err := pgx.Connect(ctx, "postgres://postgres:perlovka14@localhost:5432/patchesj")
+		DBConn, err := pgx.Connect(ctx, "postgres://postgres:postgres@localhost:5433/postgres")
 		if err != nil {
 			logger.Error(err.Error())
 			os.Exit(1)
@@ -54,8 +51,8 @@ func main() {
 		go func() {
 			errChan <- r.StartDB(DBConn)
 		}()
-	} else if cache {
-
+	} else {
+		r.Cache = cache.Init()
 		go func() {
 			errChan <- r.StartCache()
 		}()

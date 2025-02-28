@@ -8,12 +8,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+/*
+	TO DO SQL to sql files?
+*/
+
 const (
 	Sql_create_table  = "CREATE TABLE IF NOT EXISTS url_data (id SERIAL PRIMARY KEY, short_url TEXT NOT NULL UNIQUE, url TEXT NOT NULL);"
 	sql_insert        = "INSERT INTO url_data (short_url, url) VALUES ($1, $2)"
 	sql_select_origin = "SELECT url FROM url_data WHERE short_url=$1"
-	sql_select_short  = "SELECT short_url from url_data WHERE short_url=$1"
+	sql_select_short  = "SELECT short_url FROM url_data WHERE short_url=$1"
 )
+
+// TO DO check short_url when origin_url already exist!!!
 
 func DBPush(DBConn *pgx.Conn, short_url string, request service.HTPPModel) error {
 	ctx := context.Background()

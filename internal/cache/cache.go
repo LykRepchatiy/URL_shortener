@@ -5,18 +5,16 @@ import (
 	"url_shortener/internal/service"
 )
 
-// TO DO second map for cache
-// connect with router
 type Cache struct {
 	Short_origin map[string]string
 	Origin_short map[string]string
 }
 
 func Init() *Cache {
-	var cache *Cache
+	var cache Cache
 	cache.Origin_short = make(map[string]string)
 	cache.Short_origin = make(map[string]string)
-	return cache
+	return &cache
 }
 
 func (c *Cache) appendToCache(key, value string) {
@@ -26,7 +24,7 @@ func (c *Cache) appendToCache(key, value string) {
 
 func (c *Cache) PushCache(key, value string) (string, error) {
 	var res string
-
+	
 	_, ok := c.Short_origin[key]
 	if ok {
 		if c.Short_origin[key] == value {
@@ -41,15 +39,14 @@ func (c *Cache) PushCache(key, value string) (string, error) {
 		res = newShort
 		return res, nil
 	} else {
-		res = service.ShortURL(value)
-		c.appendToCache(res, value)
+		c.appendToCache(key, value)
 	}
 
 	return res, nil
 }
 
 func (c *Cache) GetCache(key string) (string, error) {
-	if value, ok := cache_map[key]; ok {
+	if value, ok := c.Short_origin[key]; ok {
 		return value, nil
 	}
 	return "", errors.New("Short url not found.")

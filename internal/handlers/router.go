@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"url_shortener/internal/cache"
 	"url_shortener/internal/handlers/middleware/logger"
 	"url_shortener/internal/handlers/middleware/validate"
 
@@ -13,6 +14,7 @@ import (
 type Router struct {
 	PG     *pgx.Conn
 	Router chi.Mux
+	Cache  *cache.Cache
 }
 
 func NewRouter() *Router {
@@ -31,10 +33,9 @@ func (r *Router) StartDB(DBConn *pgx.Conn) error {
 
 func (r *Router) StartCache() error {
 	r.Router.Use(logger.MiddlewareLogger)
-	// r.Router.With(validate.MiddlewareValidatePost).Post("/post" /*Post*/)
-	// r.Router.With(validate.MiddlewareValidateGet).Get("/get" /*Get*/)
-	// return http.ListenAndServe(":8080", &r.Router)
-	return nil
+	r.Router.With(validate.MiddlewareValidatePost).Post("/post", r.PostCache)
+	r.Router.With(validate.MiddlewareValidateGet).Get("/get", r.GetCache)
+	return http.ListenAndServe(":8080", &r.Router)
 }
 
 func (r *Router) Finish() {
