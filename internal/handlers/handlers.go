@@ -8,6 +8,8 @@ import (
 	"url_shortener/internal/service"
 )
 
+// TO DO handlers for cache 
+
 func (rout *Router) Post(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	var request service.HTPPModel

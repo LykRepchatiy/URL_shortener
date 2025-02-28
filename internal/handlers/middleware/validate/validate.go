@@ -3,9 +3,8 @@ package validate
 import (
 	"net/http"
 	"strings"
+	"url_shortener/internal/service"
 )
-
-const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 
 func MiddlewareValidatePost(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +28,7 @@ func MiddlewareValidateGet(next http.Handler) http.Handler {
 			return
 		}
 		for _, char := range short_url {
-			if !strings.ContainsRune(alphabet, char) {
+			if !strings.ContainsRune(service.Alphabet, char) {
 				http.Error(w, "Invalid short URL", http.StatusBadRequest)
 				return
 			}

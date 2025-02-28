@@ -10,15 +10,15 @@ type HTPPModel struct {
 	URL string `json:"url"`
 }
 
-const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+const Alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 
 func ShortURL(input string) string {
 	hash := sha256.Sum256([]byte(input))
 	var builder strings.Builder
 	builder.Grow(10)
 	for i := 0; i < 10; i++ {
-		index := int(hash[i]) % len(alphabet)
-		builder.WriteByte(alphabet[index])
+		index := int(hash[i]) % len(Alphabet)
+		builder.WriteByte(Alphabet[index])
 	}
 	return builder.String()
 }
