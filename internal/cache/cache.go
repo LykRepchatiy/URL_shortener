@@ -24,7 +24,7 @@ func (c *Cache) appendToCache(key, value string) {
 
 func (c *Cache) PushCache(key, value string) (string, error) {
 	var res string
-	
+
 	_, ok := c.Short_origin[key]
 	if ok {
 		if c.Short_origin[key] == value {

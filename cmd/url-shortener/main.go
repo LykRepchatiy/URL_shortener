@@ -20,14 +20,9 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&postgre, "postgre", false, "use postgre for store URLs")
+	flag.BoolVar(&postgre, "p", false, "use postgre for store URLs")
 	flag.Parse()
 }
-
-/*
-	TO DO graceful shutdown!!!
-	TO DO postgres connection URL to config!!!
-*/
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
@@ -38,7 +33,7 @@ func main() {
 	r := handlers.NewRouter()
 	if postgre {
 		ctx := context.Background()
-		DBConn, err := pgx.Connect(ctx, "postgres://postgres:postgres@localhost:5433/postgres")
+		DBConn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
 		if err != nil {
 			logger.Error(err.Error())
 			os.Exit(1)

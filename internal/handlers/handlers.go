@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"url_shortener/internal/database"
@@ -50,7 +49,6 @@ func (rout *Router) GetDB(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rout *Router) PostCache(w http.ResponseWriter, r *http.Request) {
-	log.Println("1")
 	body, _ := io.ReadAll(r.Body)
 	var request service.HTPPModel
 	json.Unmarshal(body, &request)
