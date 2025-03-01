@@ -4,15 +4,16 @@ import (
 	"context"
 	"net/http"
 	"url_shortener/internal/cache"
+	"url_shortener/internal/database"
 	"url_shortener/internal/handlers/middleware/logger"
 	"url_shortener/internal/handlers/middleware/validate"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 )
 
 type Router struct {
-	PG     *pgx.Conn
+	PG     database.QueryRower
 	Router chi.Mux
 	Cache  *cache.Cache
 }

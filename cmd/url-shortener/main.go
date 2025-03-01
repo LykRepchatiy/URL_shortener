@@ -12,7 +12,7 @@ import (
 	"url_shortener/internal/database"
 	"url_shortener/internal/handlers"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 )
 
 var (

@@ -5,8 +5,15 @@ import (
 	"errors"
 	"url_shortener/internal/service"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 )
+
+type QueryRower interface {
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	Close(ctx context.Context) error
+}
 
 const (
 	Sql_create_table  = "CREATE TABLE IF NOT EXISTS url_data (id SERIAL PRIMARY KEY, short_url TEXT NOT NULL UNIQUE, url TEXT NOT NULL UNIQUE);"
@@ -15,7 +22,7 @@ const (
 	sql_select_short  = "SELECT short_url FROM url_data WHERE short_url=$1"
 )
 
-func checkMatch(DBConn *pgx.Conn, ctx context.Context,
+func checkMatch(DBConn QueryRower, ctx context.Context,
 	short_url, URL string) (string, error) {
 	var sql_origin_url string
 	err := DBConn.QueryRow(ctx, sql_select_origin, short_url).Scan(&sql_origin_url)
@@ -30,7 +37,7 @@ func checkMatch(DBConn *pgx.Conn, ctx context.Context,
 	return short_url, nil
 }
 
-func DBPush(DBConn *pgx.Conn, short_url string, request service.HTPPModel) error {
+func DBPush(DBConn QueryRower, short_url string, request service.HTPPModel) error {
 	ctx := context.Background()
 	_, err := DBConn.Exec(ctx, sql_insert, short_url, request.URL)
 	if err != nil {
@@ -49,7 +56,7 @@ func DBPush(DBConn *pgx.Conn, short_url string, request service.HTPPModel) error
 	return nil
 }
 
-func DBGet(DBConn *pgx.Conn, short_url string) (string, error) {
+func DBGet(DBConn QueryRower, short_url string) (string, error) {
 	ctx := context.Background()
 	var sql_origin_url string
 	err := DBConn.QueryRow(ctx, sql_select_origin, short_url).Scan(&sql_origin_url)
