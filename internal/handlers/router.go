@@ -15,12 +15,15 @@ import (
 type Router struct {
 	PG     database.QueryRower
 	Router chi.Mux
-	Cache  *cache.Cache
+	Cache  cache.CacheInterface
+	dbCon  database.DB
 }
 
-func NewRouter() *Router {
+func NewRouter(db database.DB, cache cache.CacheInterface) *Router {
 	return &Router{
 		Router: *chi.NewRouter(),
+		dbCon:  db,
+		Cache:  cache,
 	}
 }
 

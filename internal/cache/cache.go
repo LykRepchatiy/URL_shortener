@@ -10,6 +10,12 @@ type Cache struct {
 	Origin_short map[string]string
 }
 
+type CacheInterface interface {
+	AppendToCache(key, value string)
+	PushCache(key, value string) (string, error)
+	GetCache(key string) (string, error)
+}
+
 func Init() *Cache {
 	var cache Cache
 	cache.Origin_short = make(map[string]string)
@@ -17,7 +23,7 @@ func Init() *Cache {
 	return &cache
 }
 
-func (c *Cache) appendToCache(key, value string) {
+func (c *Cache) AppendToCache(key, value string) {
 	c.Short_origin[key] = value
 	c.Origin_short[value] = key
 }
@@ -35,11 +41,11 @@ func (c *Cache) PushCache(key, value string) (string, error) {
 	if ok && c.Short_origin[key] != value {
 		tmp := value[:len(value)-1]
 		newShort := service.ShortURL(tmp)
-		c.appendToCache(newShort, value)
+		c.AppendToCache(newShort, value)
 		res = newShort
 		return res, nil
 	} else {
-		c.appendToCache(key, value)
+		c.AppendToCache(key, value)
 	}
 
 	return res, nil

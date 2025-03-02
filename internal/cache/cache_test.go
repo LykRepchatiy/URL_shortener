@@ -38,7 +38,7 @@ func TestAppendToCache(t *testing.T) {
         Short_origin: make(map[string]string),
     }
 
-    cache.appendToCache("short1", "origin1")
+    cache.AppendToCache("short1", "origin1")
     if cache.Short_origin["short1"] != "origin1" {
         t.Errorf("Short_origin[\"short1\"] = %s; ожидалось \"origin1\"", cache.Short_origin["short1"])
     }

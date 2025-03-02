@@ -15,14 +15,23 @@ type QueryRower interface {
 	Close(ctx context.Context) error
 }
 
+type DataBase struct {}
+
+type DB interface {
+	СheckMatch(DBConn QueryRower, ctx context.Context,
+		short_url, URL string) (string, error)
+	DBPush(DBConn QueryRower, short_url string, request service.HTTPModel) error
+	DBGet(DBConn QueryRower, short_url string) (string, error)
+}
+
 const (
 	Sql_create_table  = "CREATE TABLE IF NOT EXISTS url_data (id SERIAL PRIMARY KEY, short_url TEXT NOT NULL UNIQUE, url TEXT NOT NULL UNIQUE);"
-	sql_insert        = "INSERT INTO url_data (short_url, url) VALUES ($1, $2)"
+	Sql_insert        = "INSERT INTO url_data (short_url, url) VALUES ($1, $2)"
 	sql_select_origin = "SELECT url FROM url_data WHERE short_url=$1"
-	sql_select_short  = "SELECT short_url FROM url_data WHERE short_url=$1"
+	sql_select_short   = "SELECT short_url FROM url_data WHERE short_url=$1"
 )
 
-func checkMatch(DBConn QueryRower, ctx context.Context,
+func (db DataBase) СheckMatch(DBConn QueryRower, ctx context.Context,
 	short_url, URL string) (string, error) {
 	var sql_origin_url string
 	err := DBConn.QueryRow(ctx, sql_select_origin, short_url).Scan(&sql_origin_url)
@@ -37,11 +46,11 @@ func checkMatch(DBConn QueryRower, ctx context.Context,
 	return short_url, nil
 }
 
-func DBPush(DBConn QueryRower, short_url string, request service.HTPPModel) error {
+func (db DataBase) DBPush(DBConn QueryRower, short_url string, request service.HTTPModel) error {
 	ctx := context.Background()
-	_, err := DBConn.Exec(ctx, sql_insert, short_url, request.URL)
+	_, err := DBConn.Exec(ctx, Sql_insert, short_url, request.URL)
 	if err != nil {
-		short_url, err := checkMatch(DBConn, ctx, short_url, request.URL)
+		short_url, err := db.СheckMatch(DBConn, ctx, short_url, request.URL)
 		if err != nil {
 			return err
 		}
@@ -56,7 +65,7 @@ func DBPush(DBConn QueryRower, short_url string, request service.HTPPModel) erro
 	return nil
 }
 
-func DBGet(DBConn QueryRower, short_url string) (string, error) {
+func (db DataBase) DBGet(DBConn QueryRower, short_url string) (string, error) {
 	ctx := context.Background()
 	var sql_origin_url string
 	err := DBConn.QueryRow(ctx, sql_select_origin, short_url).Scan(&sql_origin_url)

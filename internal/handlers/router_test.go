@@ -3,10 +3,14 @@ package handlers
 import (
 	"reflect"
 	"testing"
+	"url_shortener/internal/cache"
+	"url_shortener/internal/database"
 )
 
 func TestNewRouter(t *testing.T) {
-	router := NewRouter()
+	db := database.DataBase{}
+	c := cache.Cache{}
+	router := NewRouter(db, &c)
 
 	if router == nil {
 		t.Errorf("NewRouter вернул nil, ожидался ненулевой указатель")

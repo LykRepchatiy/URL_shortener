@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type HTPPModel struct {
+type HTTPModel struct {
 	URL string `json:"url"`
 }
 

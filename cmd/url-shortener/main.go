@@ -29,8 +29,9 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	errChan := make(chan error, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	r := handlers.NewRouter()
+	c := cache.Init()
+	db := database.DataBase{}
+	r := handlers.NewRouter(db, c)
 	if postgre {
 		ctx := context.Background()
 		DBConn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))

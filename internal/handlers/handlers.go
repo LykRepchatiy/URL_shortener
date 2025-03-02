@@ -5,13 +5,12 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"url_shortener/internal/database"
 	"url_shortener/internal/service"
 )
 
 func (rout *Router) PostDB(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	var request service.HTPPModel
+	var request service.HTTPModel
 	json.Unmarshal(body, &request)
 	if request.URL == "" {
 		http.Error(w, "URL is required", http.StatusBadRequest)
@@ -22,12 +21,12 @@ func (rout *Router) PostDB(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	short_url := service.ShortURL(request.URL)
-	err := database.DBPush(rout.PG, short_url, request)
+	err := rout.dbCon.DBPush(rout.PG, short_url, request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(service.HTPPModel{URL: short_url}); err != nil {
+	if err := json.NewEncoder(w).Encode(service.HTTPModel{URL: short_url}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -36,12 +35,12 @@ func (rout *Router) PostDB(w http.ResponseWriter, r *http.Request) {
 
 func (rout *Router) GetDB(w http.ResponseWriter, r *http.Request) {
 	short_url := r.URL.Query().Get("short_url")
-	sql_origin_url, err := database.DBGet(rout.PG, short_url)
+	sql_origin_url, err := rout.dbCon.DBGet(rout.PG, short_url)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(service.HTPPModel{URL: sql_origin_url}); err != nil {
+	if err := json.NewEncoder(w).Encode(service.HTTPModel{URL: sql_origin_url}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -50,7 +49,7 @@ func (rout *Router) GetDB(w http.ResponseWriter, r *http.Request) {
 
 func (rout *Router) PostCache(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
-	var request service.HTPPModel
+	var request service.HTTPModel
 	json.Unmarshal(body, &request)
 	if request.URL == "" {
 		http.Error(w, "URL is required", http.StatusBadRequest)
@@ -70,7 +69,7 @@ func (rout *Router) PostCache(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(service.HTPPModel{URL: short_url}); err != nil {
+	if err := json.NewEncoder(w).Encode(service.HTTPModel{URL: short_url}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -84,7 +83,7 @@ func (rout *Router) GetCache(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(service.HTPPModel{URL: origin_url}); err != nil {
+	if err := json.NewEncoder(w).Encode(service.HTTPModel{URL: origin_url}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
