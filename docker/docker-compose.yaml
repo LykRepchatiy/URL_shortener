@@ -2,7 +2,7 @@ services:
 
   postgres:
     image: postgres:latest
-    container_name: url-container
+    container_name: database-container
     ports:
       - "5433:5432"
     env_file:
@@ -11,12 +11,15 @@ services:
       - app_network
 
   url-shortener:
-    build: cmd/url-shortener
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: url-shortener
     ports:
       - "8080:8080"
-    env_file:
-      - cmd/url-shortener/url-shortener.env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
+      - STORAGE=cache
     depends_on:
       - postgres
     networks:

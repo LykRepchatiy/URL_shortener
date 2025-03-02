@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"flag"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -19,12 +19,27 @@ var (
 	postgre bool
 )
 
-func init() {
-	flag.BoolVar(&postgre, "p", false, "use postgre for store URLs")
-	flag.Parse()
+type Env struct {
+	databaseUrl string
+	storage     string
+}
+
+func initEnv() Env {
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		log.Fatal("DATABASE_URL is not set")
+	}
+	storage := os.Getenv("STORAGE")
+	if storage == "" {
+		log.Fatal("STORAGE is not set")
+	}
+	return Env{
+		databaseUrl: databaseUrl,
+		storage:     storage}
 }
 
 func main() {
+	env := initEnv()
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	signalChan := make(chan os.Signal, 1)
 	errChan := make(chan error, 1)
@@ -32,9 +47,9 @@ func main() {
 	c := cache.Init()
 	db := database.DataBase{}
 	r := handlers.NewRouter(db, c)
-	if postgre {
+	if env.storage == "postgre" {
 		ctx := context.Background()
-		DBConn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
+		DBConn, err := pgx.Connect(ctx, env.databaseUrl)
 		if err != nil {
 			logger.Error(err.Error())
 			os.Exit(1)
@@ -47,7 +62,7 @@ func main() {
 		go func() {
 			errChan <- r.StartDB(DBConn)
 		}()
-	} else {
+	} else if env.storage == "cache" {
 		r.Cache = cache.Init()
 		go func() {
 			errChan <- r.StartCache()
